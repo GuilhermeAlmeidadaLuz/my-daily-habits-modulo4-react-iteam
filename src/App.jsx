@@ -1,46 +1,33 @@
 import './App.css'
+import BemVindo from './components/BemVindo.jsx'
 import Footer from './components/Footer.jsx'
+import HabitList from './components/HabitList.jsx'
+import Header from './components/Header.jsx'
+import SecaoHabitos from './components/SecaoHabitos.jsx'
 
-const BemVindo = ({ nomeUsuario, totalHabitos }) => {
-  // Lógica antes do return
-  const nomeFormatado = nomeUsuario.toUpperCase();
-  const mensagem = totalHabitos > 0
-    ? `Você tem ${totalHabitos} hábito(s) cadastrado(s).`
-    : "Nenhum hábito cadastrado ainda. Que tal começar?";
+
+function App() {
+  const habits = [
+    { id: 1, titulo: 'Exercício', meta: 5, ativo: true, diasFeitos: 5 },
+    { id: 2, titulo: 'Leitura', meta: 7, ativo: true, diasFeitos: 3 },
+    { id: 3, titulo: 'Meditação', meta: 7, ativo: false, diasFeitos: 0 },
+    { id: 4, titulo: 'Hidratação', meta: 7, ativo: true, diasFeitos: 6 }
+  ]
 
   return (
     <div>
-      <h2>Olá, {nomeFormatado}!</h2>
-      <p>{mensagem}</p>
-      <p>Média diária: {(totalHabitos * 30).toFixed(0)} atividades por mês</p>
-    </div>
-  );
-};
-
-
-
-App() {
-  return (
-    <div>
-      <Cabecalho
+      <Header
         titulo="My Daily Habits"
         descricao="Construindo uma rotina melhor, um hábito por vez."
       />
-      <BemVindo nomeUsuario="turma iteam" totalHabitos={5} />
+      <div className='bem-vindo'>
+        <BemVindo nomeUsuario="turma iteam" totalHabitos={habits.length}/>
+      </div>
+      <SecaoHabitos titulo="Meus Hábitos">
+        <HabitList habits={habits} />
+      </SecaoHabitos>
       <Footer />
     </div>
   );
 }
-
-// function App() {
-//   return (
-//     <div>
-//       <h1>My Daily Habits</h1>
-//       <p>Gerencie seus hábitos de forma simples e visual</p>
-    
-//       <Footer/>
-//     </div>
-//   )
-// }
-
 export default App
