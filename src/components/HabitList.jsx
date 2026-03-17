@@ -1,6 +1,6 @@
 import HabitCard from "./HabitCard";
 import BemVindo from "./BemVindo";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function HabitList() {
     const [habits, setHabits] = useState([
@@ -13,10 +13,24 @@ function HabitList() {
     const [novoNome, setNovoNome] = useState('')
     const [novaDescricao, setNovaDescricao] = useState('')
     const [novaCategoria, setNovaCategoria] = useState('')
+    const [novaMeta, setNovaMeta] = useState(0)
+
+    // useEffect:
+    useEffect( () => {
+        document.title = `My Daily Habits - ${habits.length} hábito(s)`
+    }, [habits])
+
+    useEffect(() => {
+        console.log('✅ HabitList montou')
+        return () => {
+            console.log('❌ HabitList será desmontado')
+        }
+    }, [])
 
     // Funções CRUD:
 
     const adicionarHabit = (event) => {
+        // console.log('objeto event:', event)
         event.preventDefault()
 
         if (!novoNome.trim()) {
@@ -29,7 +43,7 @@ function HabitList() {
             id: ((habits.length !== 0) ? (habits[habits.length - 1].id + 1) : 1),
             nome: novoNome,
             descricao: novaDescricao,
-            meta: 7,
+            meta: novaMeta,
             ativo: true,
             diasFeitos: 0,
             categoria: novaCategoria || 'Geral',
@@ -43,6 +57,7 @@ function HabitList() {
         setNovoNome('')
         setNovaDescricao('')
         setNovaCategoria('')
+        setNovaMeta('')
     }
     
     const removerHabit = (id) => {
@@ -66,6 +81,7 @@ function HabitList() {
                             type="text"
                             value={novoNome}
                             onChange={ (e) => setNovoNome(e.target.value) }
+                            placeholder="Digite aqui o seu hábito"
                         />
                     </label>
                 </div>
@@ -76,6 +92,7 @@ function HabitList() {
                             type="text"
                             value={novaDescricao}
                             onChange={ (e) => setNovaDescricao(e.target.value) }
+                            placeholder="Digite aqui a descrição do seu hábito"
                         />
                     </label>
                 </div>
@@ -86,13 +103,29 @@ function HabitList() {
                             type="text"
                             value={novaCategoria}
                             onChange={ (e) => setNovaCategoria(e.target.value) }
+                            placeholder="Digite a categoria que ele se encaixa"
+                        />
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Meta
+                        <input 
+                            type="number"
+                            value={novaMeta}
+                            onChange={ (e) => setNovaMeta( parseInt(e.target.value) ) }
+                            min={0}
+                            placeholder="Digite o número de dias que o hábito deve ocorrer"
                         />
                     </label>
                 </div>
                 <button type="submit">Adicionar hábito</button>
             </form>
-            <ul>
-                {habits.length === 0 && <p>Nenhum hábito cadastrado ainda. Que tal começar?</p>}
+            <ul style={{margin: 0, padding: 0}}>
+                {habits.length === 0
+                    ? <p>Nenhum hábito cadastrado ainda. Que tal começar?</p>
+                    : <p>Você tem {habits.length} hábito(s) cadastrado(s).</p>
+                }
 
                 {habits.map( (habit) => (
                     <li key={habit.id} style={{listStyle: 'none'}}>
@@ -109,7 +142,6 @@ function HabitList() {
                     </li>
                 ) )}
             </ul>
-            {console.log(habits)}
         </>
     )
 }
