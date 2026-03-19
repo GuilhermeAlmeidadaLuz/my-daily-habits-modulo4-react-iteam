@@ -1,34 +1,23 @@
 import HabitCard from "./HabitCard";
 import BemVindo from "./BemVindo";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
+import { useHabits } from "../contexts/HabitsContext";
 
 function HabitList() {
-    // useState:
-    const [habits, setHabits] = useState( () => {
-        // Esta função executa UMA VEZ - na montagem
-        const stored = localStorage.getItem('my-daily-habits')
-        
-        // Se não há nada salvo - usa o array inicial
-        if (!stored) return [
-            { id: 1, nome: 'Exercício', descricao: 'Treino de força', meta: 5, ativo: true, diasFeitos: 5 },
-            { id: 2, nome: 'Leitura', descricao: 'Livro ou artigo', meta: 7, ativo: true, diasFeitos: 3 },
-            { id: 3, nome: 'Meditação', descricao: 'Respiração e foco', meta: 7, ativo: false, diasFeitos: 0 },
-            { id: 4, nome: 'Hidratação', descricao: 'Beber 2L de Água', meta: 7, ativo: true, diasFeitos: 6 }   
-        ]
+    // Hábitos e funções vêm do contexto - não do useState local
+    const { habits, adicionarHabit, removerHabit, toggleAtivo } = useHabits()
 
-        // se há dados salvos - tenta fazer o parse
-        try {
-            return JSON.parse(stored)
-        } catch {
-            // Se o JSON estiver corrompido - volta pro array inicial
-            return []
-        }
+    // Estado de UI - continua local (só o formulário usa)
+    const [form, setForm] = useState({
+        novoNome: '',
+        novaDescricao: '',
+        novaCategoria: '',
+        novaMeta: '7'
     })
-
-    const [novoNome, setNovoNome] = useState('')
-    const [novaDescricao, setNovaDescricao] = useState('')
-    const [novaCategoria, setNovaCategoria] = useState('')
-    const [novaMeta, setNovaMeta] = useState(0)
+    // const [novoNome, setNovoNome] = useState('')
+    // const [novaDescricao, setNovaDescricao] = useState('')
+    // const [novaCategoria, setNovaCategoria] = useState('')
+    // const [novaMeta, setNovaMeta] = useState(0)
 
     const [erroNome, setErroNome] = useState('')
     const [erroMeta, setErroMeta] = useState('')
@@ -45,16 +34,11 @@ function HabitList() {
     //     console.log("Elementos no Array inicial:", habits.length)
     // }, [])
 
-    useEffect( () => {
-        localStorage.setItem('my-daily-habits', JSON.stringify(habits))
-        document.title = `My Daily Habits - ${habits.length} hábito(s)`
-    }, [habits])
-
     const handleChange = (e) => {
         const { name, value } = e.target
         // [name] é uma chave dinâmica — usa o valor de name como nome da propriedade
         if (name === 'novoNome') {
-            setNovoNome(value)
+            setForm( prev => ( {...prev, [name]: value} ) )
             // Valida comprimento mínimo em tempo real
             if (value.length > 0 && value.length < 3) {
                 setErroNome('O nome deve ter pelo menos 3 caracteres.')
@@ -62,11 +46,11 @@ function HabitList() {
                 setErroNome('')
             }
         }
-        if (name === 'novaDescricao') setNovaDescricao(value)
-        if (name === 'novaCategoria') setNovaCategoria(value)
+        if (name === 'novaDescricao') setForm(prev => ( {...prev, [name]: value } ) )
+        if (name === 'novaCategoria') setForm(prev => ( {...prev, [name]: value} ) )
         if (name === 'novaMeta') {
             const num = parseInt(value)
-            setNovaMeta(value)
+            setForm(prev => ( {...prev, [name]: value} ) )
 
             if (num < 1 || num > 7) {
                 setErroMeta('Meta deve ser entre 1 e 7 dias.')
@@ -77,88 +61,108 @@ function HabitList() {
         }
     }
 
-    // Funções CRUD:
-
-    const adicionarHabit = (event) => {
-        // console.log('objeto event:', event)
+    const handleSubmit = (event) => {
         event.preventDefault()
-
-        if (!novoNome.trim()) {
-            // se novoNome é campo vazio
-            alert('Informe um nome para o hábito.')
-            return
-        }
-
-        // Bloqueia se há erro de validação
-        if (erroNome) {
+        if (!form.novoNome.trim() || erroNome) {
             nomeInputRef.current?.focus()
             return
         }
-
-        if (erroMeta) {
-            // nomeInputRef.current?.focus()
-            return
-        }
-
         const novoHabit = {
-            id: ((habits.length !== 0) ? (habits[habits.length - 1].id + 1) : 1),
-            nome: novoNome,
-            descricao: novaDescricao,
-            meta: novaMeta,
+            id: ( (habits.length !== 0) ? ( habits.at(-1).id + 1 ) : 1 ),
+            nome: form.novoNome,
+            descricao: form.novaDescricao,
+            categoria: form.novaCategoria || 'Geral',
+            meta: parseInt(form.novaMeta) || 7,
             ativo: true,
-            diasFeitos: 0,
-            categoria: novaCategoria || 'Geral',
+            diasFeitos: 0
         }
 
-        setHabits([...habits, novoHabit])
-        // console.log("Sem spreading:\n", [habits, novoHabit])
-        // console.log("Com spreading:\n", [...habits, novoHabit])
-        
-        // Limpar os campos após adicionar:
-        setNovoNome('')
-        setNovaDescricao('')
-        setNovaCategoria('')
-        setNovaMeta('')
-
-        // Devolve o foco para o campo nome - useRef em ação
+        adicionarHabit(novoHabit)   // <- função do contexto
+        setForm( {novoNome: '', novaDescricao: '', novaCategoria: '', novaMeta: '7'} )
+        setErroNome('')
         nomeInputRef.current?.focus()
     }
-    
-    const removerHabit = (id) => {
-        // filtra os hábitos que não tem o id selecionada,
-        // repassa para o setHabits o array de objetos com filtro sem o objeto com o id especificado
-        // para que ele possa guardar este estado
-        setHabits(habits.filter( habit => habit.id !== id ))
-    }
 
-    const limparHistorico = (event) => {
-        console.log(event)
-        localStorage.removeItem('my-daily-habits')
-        setHabits([
-            { id: 1, nome: 'Exercício', descricao: 'Treino de força', meta: 5, ativo: true, diasFeitos: 5 },
-            { id: 2, nome: 'Leitura', descricao: 'Livro ou artigo', meta: 7, ativo: true, diasFeitos: 3 },
-            { id: 3, nome: 'Meditação', descricao: 'Respiração e foco', meta: 7, ativo: false, diasFeitos: 0 },
-            { id: 4, nome: 'Hidratação', descricao: 'Beber 2L de Água', meta: 7, ativo: true, diasFeitos: 6 }
-        ])
-    }
+    if (!habits) return null    // se a lista habits estiver vazia, habits é true. Mas se habits não aponta para nada, habits é false
+
+    // Funções CRUD (foram para .src/contexts/HabitsContext.jsx):
+
+    // const adicionarHabit = (event) => {
+    //     // console.log('objeto event:', event)
+    //     event.preventDefault()
+
+    //     if (!novoNome.trim()) {
+    //         // se novoNome é campo vazio
+    //         alert('Informe um nome para o hábito.')
+    //         return
+    //     }
+
+    //     // Bloqueia se há erro de validação
+    //     if (erroNome) {
+    //         nomeInputRef.current?.focus()
+    //         return
+    //     }
+
+    //     if (erroMeta) {
+    //         // nomeInputRef.current?.focus()
+    //         return
+    //     }
+
+    //     const novoHabit = {
+    //         id: ((habits.length !== 0) ? (habits[habits.length - 1].id + 1) : 1),
+    //         nome: novoNome,
+    //         descricao: novaDescricao,
+    //         meta: novaMeta,
+    //         ativo: true,
+    //         diasFeitos: 0,
+    //         categoria: novaCategoria || 'Geral',
+    //     }
+
+    //     setHabits([...habits, novoHabit])
+    //     // console.log("Sem spreading:\n", [habits, novoHabit])
+    //     // console.log("Com spreading:\n", [...habits, novoHabit])
+        
+    //     // Limpar os campos após adicionar:
+    //     setNovoNome('')
+    //     setNovaDescricao('')
+    //     setNovaCategoria('')
+    //     setNovaMeta('')
+
+    //     // Devolve o foco para o campo nome - useRef em ação
+    //     nomeInputRef.current?.focus()
+    // }
+    
+    // const removerHabit = (id) => {
+    //     // filtra os hábitos que não tem o id selecionada,
+    //     // repassa para o setHabits o array de objetos com filtro sem o objeto com o id especificado
+    //     // para que ele possa guardar este estado
+    //     setHabits(habits.filter( habit => habit.id !== id ))
+    // }
+
+    // const limparHistorico = (event) => {
+    //     // console.log(event)
+    //     localStorage.removeItem('my-daily-habits')
+    //     setHabits([
+    //         { id: 1, nome: 'Exercício', descricao: 'Treino de força', meta: 5, ativo: true, diasFeitos: 5 },
+    //         { id: 2, nome: 'Leitura', descricao: 'Livro ou artigo', meta: 7, ativo: true, diasFeitos: 3 },
+    //         { id: 3, nome: 'Meditação', descricao: 'Respiração e foco', meta: 7, ativo: false, diasFeitos: 0 },
+    //         { id: 4, nome: 'Hidratação', descricao: 'Beber 2L de Água', meta: 7, ativo: true, diasFeitos: 6 }
+    //     ])
+    // }
 
     const QuantidadeHabitosAtivos = habits.filter(h => h.ativo).length
 
     // retorno padrão estilo switch case quando as condições acima não são satisfeitas no fluxo do programa
     return (
-        <>
-            <div className='bem-vindo'>
-                <BemVindo nomeUsuario="turma iteam" totalHabitos={habits.length}/>
-                <p>{`Hábitos ativos: ${QuantidadeHabitosAtivos}`}</p>
-            </div>
-            <form onSubmit={adicionarHabit} className="habit-form">
+        <section>
+            <form onSubmit={handleSubmit} className="habit-form">
                 <div>
                     <label>
                         Nome do hábito <span style={{color: "red", fontWeight: "bold"}}>*</span>
                         <input
                             type="text"
                             name="novoNome"
-                            value={novoNome}
+                            value={form.novoNome}
                             onChange={ handleChange }
                             ref={nomeInputRef}
                             placeholder="Digite aqui o seu hábito"
@@ -172,7 +176,7 @@ function HabitList() {
                         <input 
                             type="text"
                             name="novaDescricao"
-                            value={novaDescricao}
+                            value={form.novaDescricao}
                             onChange={ handleChange }
                             placeholder="Digite aqui a descrição do seu hábito"
                         />
@@ -184,7 +188,7 @@ function HabitList() {
                         <input 
                             type="text"
                             name="novaCategoria"
-                            value={novaCategoria}
+                            value={form.novaCategoria}
                             onChange={ handleChange }
                             placeholder="Digite a categoria que ele se encaixa"
                         />
@@ -192,13 +196,14 @@ function HabitList() {
                 </div>
                 <div>
                     <label>
-                        Meta
+                        Meta (dias por semana)
                         <input 
                             type="number"
                             name="novaMeta"
-                            value={novaMeta}
+                            value={form.novaMeta}
                             onChange={ handleChange }
-                            min={0}
+                            min={1}
+                            max={7}
                             placeholder="Digite o número de dias que o hábito deve ocorrer"
                         />
                     </label>
@@ -206,7 +211,7 @@ function HabitList() {
                 </div>
                 <div className="buttons-container">
                     <button type="submit"> <span>✍</span> Adicionar hábito</button>
-                    <button type="button" onClick={limparHistorico}> <span>🧹</span> Limpar histórico</button>
+                    {/* <button type="button" onClick={limparHistorico}> <span>🧹</span> Limpar histórico</button> */}
                 </div>
             </form>
             <ul style={{margin: 0, padding: 0}}>
@@ -226,11 +231,12 @@ function HabitList() {
                             categoria={habit.categoria} // obrigatório ter, caso seja inserido
                             // função:
                             onRemover={ () => removerHabit(habit.id) }
+                            onToggle={ () => toggleAtivo(habit.id)}
                         />
                     </li>
                 ) )}
             </ul>
-        </>
+        </section>
     )
 }
 

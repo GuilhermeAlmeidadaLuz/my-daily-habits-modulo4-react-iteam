@@ -1,5 +1,5 @@
 
-function HabitCard( { nome, descricao='', meta, ativo = true, diasFeitos = 0, categoria = 'Geral', onRemover } ) {
+function HabitCard( { nome, descricao='', meta, ativo = true, diasFeitos = 0, categoria = 'Geral', onRemover, onToggle } ) {
     const metaAtingida = diasFeitos >= meta
 
     const mensagemMeta = metaAtingida
@@ -26,6 +26,11 @@ function HabitCard( { nome, descricao='', meta, ativo = true, diasFeitos = 0, ca
                 <button type="button" onClick={onRemover}>
                     Remover
                 </button>
+            )}
+            {onToggle && ( 
+                <button type="button" onClick={onToggle}> 
+                    {ativo ? 'Pausar' : 'Ativar'} 
+                </button> 
             )}
         </div>
     )
