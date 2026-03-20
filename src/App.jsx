@@ -1,32 +1,38 @@
 import './App.css'
-import Header from './components/Header.jsx'
-import Footer from './components/Footer.jsx'
-import BemVindo from './components/BemVindo.jsx'
-import SecaoHabitos from './components/SecaoHabitos.jsx'
-import HabitList from './components/HabitList.jsx'
-import { HabitsProvider } from './contexts/HabitsContext.jsx'
+
+import { Routes, Route } from 'react-router-dom'
+import LayoutPrincipal from './layouts/LayoutPrincipal.jsx'
+import PaginaInicio from './pages/PaginaInicio.jsx'
+import PaginaHabitos from './pages/PaginaHabitos.jsx'
+import PaginaDetalhes from './pages/PaginaDetalhes.jsx'
+import PaginaNaoEncontrada from './pages/PaginaNaoEncondrada.jsx'
+import PaginaNovoHabito from './pages/PaginaNovoHabito.jsx'
 
 function App() {
 
   return (
-    <HabitsProvider>
       <div>
-        <Header
-          titulo="My Daily Habits"
-          descricao="Construindo uma rotina melhor, um hábito por vez."
-        />
-        <BemVindo className='bem-vindo' nomeUsuario="turma iteam"/>
-
-        {/* <div className='bem-vindo'>
-                <BemVindo nomeUsuario="turma iteam" totalHabitos={habits.length}/>
-                <p>{`Hábitos ativos: ${QuantidadeHabitosAtivos}`}</p>
-        </div> */}
-        <SecaoHabitos titulo="Meus Hábitos">
-          <HabitList />
-        </SecaoHabitos>
-        <Footer />
+        <Routes>
+          <Route element={<LayoutPrincipal />}>
+            <Route path="/" element={<PaginaInicio />} />
+            <Route path="/habitos" element={<PaginaHabitos />} />
+            <Route path='/habitos/novo' element={<PaginaNovoHabito />} />
+            <Route path="/habitos/:id" element={<PaginaDetalhes />} />
+          </Route>
+          <Route path="*" element={<PaginaNaoEncontrada />} />
+        </Routes>
       </div>
-    </HabitsProvider>
   );
 }
 export default App
+
+{/* <BemVindo className='bem-vindo' nomeUsuario="turma iteam"/> */}
+
+{/* <div className='bem-vindo'>
+        <BemVindo nomeUsuario="turma iteam" totalHabitos={habits.length}/>
+        <p>{`Hábitos ativos: ${QuantidadeHabitosAtivos}`}</p>
+        </div> */}
+        {/* <SecaoHabitos titulo="Meus Hábitos">
+          <HabitList />
+        </SecaoHabitos>
+         */}
